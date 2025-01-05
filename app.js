@@ -17,6 +17,12 @@ const beginQuiz = document.querySelector('.begin-quiz');
 const quizArea = document.querySelector('.quiz-area');
 const endArea = document.querySelector('.end-area');
 const totalScore = document.querySelector('.total-score');
+const timerDisplay = document.getElementById('timer');
+const timeInput = document.getElementById('timeInput');
+const usernameInput = document.getElementById('username');
+const highScoresBody = document.getElementById('highScoresBody');
+const userScoresBody = document.getElementById('userScoresBody');
+const timeSpentDisplay = document.querySelector('.time-spent');
 
 // Question Bank
 const questionBank = {
@@ -120,6 +126,67 @@ let quizData = null;
 let userScore = 0;
 let currentQuestionNumber = 1;
 let selectedCategory = null;
+let timerInterval = null;
+let timeLeft = 0;
+
+function loadHighScores() {
+    const scores = JSON.parse(localStorage.getItem('quizScores')) || [];
+    displayHighScores(scores);
+}
+
+function saveScore(score) {
+    const scores = JSON.parse(localStorage.getItem('quizScores')) || [];
+    scores.push(score);
+    
+    // Sort by score and time spent
+    scores.sort((a, b) => {
+        if (b.score !== a.score) {
+            // First sort by score (highest first)
+            return b.score - a.score;
+        } else {
+            // If scores are equal, sort by time (fastest first)
+            return a.timeSpent - b.timeSpent;
+        }
+    });
+    
+    // Keep only top 15 scores
+    const topScores = scores.slice(0, 15);
+    localStorage.setItem('quizScores', JSON.stringify(topScores));
+    
+    displayHighScores(topScores);
+}
+
+function displayHighScores(scores) {
+    highScoresBody.innerHTML = '';
+    scores.forEach(score => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${score.username}</td>
+            <td>${score.category}</td>
+            <td>${score.score}/${score.total}</td>
+            <td>${Math.floor(score.timeSpent / 60)}m ${score.timeSpent % 60}s</td>
+            <td>${new Date(score.date).toLocaleDateString()}</td>
+        `;
+        highScoresBody.appendChild(row);
+    });
+}
+
+function displayUserScores(username) {
+    const scores = JSON.parse(localStorage.getItem('quizScores')) || [];
+    const userScores = scores.filter(score => score.username === username);
+    
+    userScoresBody.innerHTML = '';
+    userScores.forEach(score => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${score.category}</td>
+            <td>${score.score}/${score.total}</td>
+            <td>${Math.floor(score.timeSpent / 60)}m ${score.timeSpent % 60}s</td>
+            <td>${new Date(score.date).toLocaleDateString()}</td>
+        `;
+        userScoresBody.appendChild(row);
+    });
+}
 
 function displayCategories() {
     // Clear existing options
@@ -144,9 +211,50 @@ function updateCategory() {
     selectedCategory = selectCategory.value;
 }
 
+function startTimer(duration) {
+    clearInterval(timerInterval);
+    timeLeft = duration * 60; // Convert minutes to seconds
+    
+    function updateTimer() {
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        
+        timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        
+        if (timeLeft === 0) {
+            clearInterval(timerInterval);
+            showResults();
+            return;
+        }
+        
+        // Change color when less than 1 minute remains
+        if (timeLeft <= 60) {
+            timerDisplay.parentElement.classList.remove('alert-info');
+            timerDisplay.parentElement.classList.add('alert-danger');
+        }
+        
+        timeLeft--;
+    }
+    
+    updateTimer();
+    timerInterval = setInterval(updateTimer, 1000);
+}
+
 function startQuiz() {
+    const username = usernameInput.value.trim();
+    if (!username) {
+        alert('Please enter your name');
+        return;
+    }
+    
     if (!selectedCategory) {
         alert('Please select a category first');
+        return;
+    }
+    
+    const timeLimit = parseInt(timeInput.value);
+    if (isNaN(timeLimit) || timeLimit < 1 || timeLimit > 60) {
+        alert('Please enter a valid time limit between 1 and 60 minutes');
         return;
     }
     
@@ -161,18 +269,17 @@ function startQuiz() {
     endArea.classList.add('hidden');
     
     renderHTML();
+    startTimer(timeLimit);
 }
 
 function renderHTML() {
-    const currentQuestion = quizData[currentQuestionIndex];
-    
     // Display question
-    question.textContent = currentQuestion.question;
+    question.textContent = quizData[currentQuestionIndex].question;
     
     // Display options
     opts_input.forEach((input, index) => {
         input.checked = false;
-        input.nextElementSibling.textContent = currentQuestion.options[index];
+        input.nextElementSibling.textContent = quizData[currentQuestionIndex].options[index];
         input.nextElementSibling.classList.remove('correct-answer');
     });
     
@@ -216,9 +323,28 @@ function nextQuestion() {
 }
 
 function showResults() {
+    clearInterval(timerInterval);
     quizArea.classList.add('hidden');
     endArea.classList.remove('hidden');
+    
+    const timeSpent = (timeInput.value * 60) - timeLeft;
+    const minutes = Math.floor(timeSpent / 60);
+    const seconds = timeSpent % 60;
+    
+    const score = {
+        username: usernameInput.value.trim(),
+        category: questionBank[selectedCategory].name,
+        score: userScore,
+        total: quizData.length,
+        timeSpent: timeSpent,
+        date: new Date().toISOString()
+    };
+    
+    saveScore(score);
+    displayUserScores(score.username);
+    
     totalScore.textContent = `Score: ${userScore} out of ${quizData.length}`;
+    timeSpentDisplay.textContent = `Time spent: ${minutes}m ${seconds}s`;
 }
 
 function previousQuestion() {
@@ -243,12 +369,18 @@ function resetQuiz() {
     selectedCategory = null;
     quizData = null;
     
+    clearInterval(timerInterval);
+    timerDisplay.parentElement.classList.remove('alert-danger');
+    timerDisplay.parentElement.classList.add('alert-info');
+    timerDisplay.textContent = '00:00';
+    
     beginQuiz.classList.remove('hidden');
     quizArea.classList.add('hidden');
     endArea.classList.add('hidden');
     
     clearHTML();
-    displayCategories(); // Reset category dropdown
+    displayCategories();
+    loadHighScores();
 }
 
 function clearHTML() {
@@ -269,5 +401,8 @@ beginBtn.addEventListener('click', startQuiz);
 restartBtn.addEventListener('click', resetQuiz);
 selectCategory.addEventListener('change', updateCategory);
 
-// Initialize categories when page loads
-document.addEventListener('DOMContentLoaded', displayCategories);
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    displayCategories();
+    loadHighScores();
+});

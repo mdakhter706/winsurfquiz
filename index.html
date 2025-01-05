@@ -12,13 +12,47 @@
 <body>
     <div class="begin-quiz text-center">
         <h1>Take a Quiz!</h1>
+        <div class="mb-3">
+            <label for="username" class="form-label">Enter Your Name:</label>
+            <input type="text" class="form-control" id="username" required placeholder="Enter your name">
+        </div>
         <p class="lead">Choose a Category:</p>
         <select class="form-select my-3" id="select-category"></select>
+        <div class="mb-3">
+            <label for="timeInput" class="form-label">Set Time Limit (minutes):</label>
+            <input type="number" class="form-control" id="timeInput" min="1" max="60" value="10">
+        </div>
         <button class="btn btn-primary begin-btn">Begin</button>
+        
+        <!-- High Scores Section -->
+        <div class="mt-4">
+            <h3>High Scores</h3>
+            <div class="table-responsive">
+                <table class="table table-striped" id="highScoresTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th>Score</th>
+                            <th>Time</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="highScoresBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
+    
     <div class="m-4 quiz-area hidden">
+        <div class="timer-container text-center mb-3">
+            <div class="timer alert alert-info">
+                Time Remaining: <span id="timer">00:00</span>
+            </div>
+        </div>
         <div class="question-area">
-            <h5 class=" text-success mt-3 question-heading text-center">Question <span class="question-number"></span> of <span class="total-questions"></span></h5>
+            <h5 class="text-success mt-3 question-heading text-center">Question <span class="question-number"></span> of <span class="total-questions"></span></h5>
             <p class="question lead"></p>
         </div>
         <div class="option-area text-center">
@@ -46,9 +80,27 @@
             </div>
         </div>
     </div>
+    
     <div class="end-area hidden text-center">
         <h1 class="total-score"></h1>
-        <p class="total-score">End of Quiz!</p>
+        <p class="time-spent"></p>
+        <div class="high-scores mb-3">
+            <h3>Your Previous Scores</h3>
+            <div class="table-responsive">
+                <table class="table table-striped" id="userScoresTable">
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Score</th>
+                            <th>Time</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userScoresBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
         <button class="restart-btn btn btn-primary">Try again!</button>
     </div>
 </body>

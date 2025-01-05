@@ -2,16 +2,18 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 100vh;
+    min-height: 100vh;
+    background-color: #f8f9fa;
+    padding: 20px;
 }
 
 .hidden {
-    display: none;
+    display: none !important;
 }
 
 .error-msg {
     color: red;
-    font-style: bold;
+    font-weight: bold;
 }
 
 .correct-answer {
@@ -26,4 +28,54 @@ body {
 .display-answer {
     color: rgb(234, 96, 32);
     font-weight: bold;
+}
+
+/* Auth Styles */
+.container {
+    max-width: 500px;
+    width: 100%;
+}
+
+.auth-container {
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.auth-container h2 {
+    color: #333;
+    margin-bottom: 1.5rem;
+}
+
+.auth-container form {
+    margin-bottom: 1rem;
+}
+
+.form-label {
+    font-weight: 500;
+}
+
+.text-danger {
+    margin-top: 0.5rem;
+}
+
+/* Quiz Area Styles */
+.quiz-container {
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    max-width: 800px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.user-info {
+    text-align: right;
+    margin-bottom: 1rem;
+}
+
+.logout-btn {
+    margin-left: 1rem;
 }
